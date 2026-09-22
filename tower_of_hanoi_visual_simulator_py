@@ -13,7 +13,7 @@ def tower_of_hanoi(n, source, auxiliary, destination):
 # Main program
 n = int(input("Enter number of disks: "))
 
-print("Minimum moves =", 2 ** n - 1)
-
 print("\nSteps:")
 tower_of_hanoi(n, "A", "B", "C")
+
+print("\nMinimum moves:", 2**n - 1)
