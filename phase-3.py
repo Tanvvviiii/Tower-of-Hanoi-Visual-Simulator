@@ -4,31 +4,111 @@ from matplotlib.patches import Rectangle
 import time
 
 st.set_page_config(
-    page_title="Tower of Hanoi Simulator",
+    page_title="Tower of Hanoi | Visual Simulator",
     page_icon="🗼",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
 st.markdown("""
 <style>
 .stApp {
-    background-color: #f2f7fb;
+    background: linear-gradient(135deg, #080d1b, #11152b, #17132e);
+    color: #f8fafc;
 }
-h1, h2, h3 {
-    color: #164e63;
+
+header[data-testid="stHeader"] {
+    background: transparent;
 }
+
+h1, h2, h3, p, label, span {
+    color: #f1f5f9;
+}
+
+.main-title {
+    font-size: 40px;
+    font-weight: 850;
+    text-align: center;
+    background: linear-gradient(90deg, #22d3ee, #a78bfa, #ec4899);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    padding: 15px 0 5px;
+}
+
+.subtitle {
+    text-align: center;
+    color: #94a3b8;
+    font-size: 16px;
+    margin-bottom: 30px;
+}
+
 [data-testid="stMetric"] {
-    background: white;
-    padding: 15px;
+    background: linear-gradient(145deg, #1c2540, #171b32);
+    border: 1px solid #35416a;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 5px 20px #00000040;
+}
+
+[data-testid="stMetricLabel"] {
+    color: #a5b4fc !important;
+}
+
+[data-testid="stMetricValue"] {
+    color: #22d3ee !important;
+    font-weight: bold;
+}
+
+.stButton > button {
+    background: linear-gradient(90deg, #6d28d9, #2563eb);
+    color: white;
+    border: 1px solid #818cf8;
     border-radius: 12px;
-    border-left: 4px solid #0891b2;
+    padding: 10px;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+.stButton > button:hover {
+    border: 1px solid #22d3ee;
+    color: #22d3ee;
+    transform: translateY(-2px);
+}
+
+section[data-testid="stSidebar"] {
+    background: #10172a;
+    border-right: 1px solid #35416a;
+}
+
+div[data-testid="stProgressBar"] > div > div {
+    background: linear-gradient(90deg, #06b6d4, #8b5cf6);
+}
+
+.info-card {
+    background: #1c2540;
+    border: 1px solid #39466b;
+    border-radius: 15px;
+    padding: 18px;
+    margin: 8px 0;
+}
+
+.footer {
+    text-align: center;
+    color: #64748b;
+    padding: 20px;
 }
 </style>
 """, unsafe_allow_html=True)
 
-st.title("🗼 Tower of Hanoi Visual Simulator")
-st.write(
-    "Explore the Tower of Hanoi puzzle with animated disk movements."
+st.markdown(
+    '<div class="main-title">🗼 TOWER OF HANOI</div>',
+    unsafe_allow_html=True
+)
+
+st.markdown(
+    '<div class="subtitle">Interactive Puzzle • Algorithm Visualization • '
+    'Smart Move Tracking</div>',
+    unsafe_allow_html=True
 )
 
 def solve_hanoi(n, source, auxiliary, destination, moves):
@@ -39,6 +119,14 @@ def solve_hanoi(n, source, auxiliary, destination, moves):
     solve_hanoi(n - 1, source, destination, auxiliary, moves)
     moves.append((n, source, destination))
     solve_hanoi(n - 1, auxiliary, source, destination, moves)
+
+def initialize_game(n):
+    moves = []
+    solve_hanoi(n, "A", "B", "C", moves)
+
+    st.session_state.moves = moves
+    st.session_state.disk_count = n
+    st.session_state.step = 0
 
 def get_rods(n, moves, step):
     rods = {
@@ -53,81 +141,103 @@ def get_rods(n, moves, step):
 
     return rods
 
-def draw_towers(n, rods, step, total_moves):
-    fig, ax = plt.subplots(figsize=(10, 5))
+def draw_towers(n, rods, step, total):
+    fig, ax = plt.subplots(figsize=(11, 5.5))
 
-    rod_positions = {"A": 1, "B": 3, "C": 5}
-    colors = ["#0ea5e9", "#22c55e", "#f97316",
-              "#a855f7", "#eab308", "#ef4444",
-              "#14b8a6", "#64748b"]
+    fig.patch.set_facecolor("#11152b")
+    ax.set_facecolor("#11152b")
 
-    ax.set_xlim(0, 6)
+    positions = {"A": 1.5, "B": 4.5, "C": 7.5}
+
+    colors = [
+        "#22d3ee", "#a78bfa", "#f472b6", "#fbbf24",
+        "#34d399", "#fb7185", "#818cf8", "#38bdf8"
+    ]
+
+    ax.set_xlim(0, 9)
     ax.set_ylim(0, n + 2)
-    ax.set_facecolor("#f8fafc")
-    fig.patch.set_facecolor("#f8fafc")
 
-    for rod, x in rod_positions.items():
-        ax.add_patch(
-            Rectangle((x - 0.04, 0.5), 0.08, n + 0.5,
-                      color="#475569")
-        )
-        ax.text(x, 0.12, f"Rod {rod}",
-                ha="center", fontsize=12, fontweight="bold")
+    for rod, x in positions.items():
+
+        ax.add_patch(Rectangle(
+            (x - 0.045, 0.55),
+            0.09, n + 0.55,
+            color="#94a3b8"
+        ))
+
+        ax.add_patch(Rectangle(
+            (x - 1.2, 0.4),
+            2.4, 0.15,
+            color="#64748b"
+        ))
 
         for level, disk in enumerate(rods[rod]):
-            width = 0.35 + disk * 0.15
-            color = colors[(disk - 1) % len(colors)]
+            width = 0.38 + disk * 0.19
 
-            ax.add_patch(
-                Rectangle(
-                    (x - width / 2, 0.65 + level * 0.45),
-                    width,
-                    0.4,
-                    facecolor=color,
-                    edgecolor="#334155",
-                    linewidth=1.2
-                )
-            )
+            ax.add_patch(Rectangle(
+                (x - width / 2, 0.65 + level * 0.48),
+                width, 0.43,
+                facecolor=colors[(disk - 1) % len(colors)],
+                edgecolor="white",
+                linewidth=1.3
+            ))
 
             ax.text(
-                x, 0.85 + level * 0.45, str(disk),
-                ha="center", va="center",
-                color="white", fontweight="bold"
+                x,
+                0.86 + level * 0.48,
+                str(disk),
+                ha="center",
+                va="center",
+                color="#10172a",
+                fontsize=11,
+                fontweight="bold"
             )
 
+        ax.text(
+            x, 0.05,
+            f"ROD {rod}",
+            ha="center",
+            color="#22d3ee",
+            fontsize=13,
+            fontweight="bold"
+        )
+
     ax.set_title(
-        f"Tower of Hanoi — Move {step} of {total_moves}",
-        fontsize=15, fontweight="bold", pad=15
+        f"MOVEMENT VISUALIZATION  |  {step} / {total}",
+        color="#e2e8f0",
+        fontsize=15,
+        fontweight="bold",
+        pad=20
     )
+
     ax.axis("off")
     fig.tight_layout()
-    return fig
 
-def initialize_game(n):
-    moves = []
-    solve_hanoi(n, "A", "B", "C", moves)
-    st.session_state.moves = moves
-    st.session_state.disk_count = n
-    st.session_state.step = 0
+    return fig
 
 if "disk_count" not in st.session_state:
     initialize_game(3)
 
-st.sidebar.header("Game Settings")
+st.sidebar.markdown("## ⚙️ GAME SETTINGS")
 
 disk_count = st.sidebar.slider(
-    "Number of disks",
-    min_value=1,
-    max_value=8,
-    value=st.session_state.disk_count
+    "🔵 Select Number of Disks",
+    1, 8,
+    st.session_state.disk_count
 )
 
 speed = st.sidebar.slider(
-    "Animation delay (seconds)",
-    min_value=0.1,
-    max_value=1.5,
-    value=0.5,
-    step=0.1
+    "⚡ Animation Speed",
+    0.1, 1.5,
+    0.5,
+    0.1
+)
+
+st.sidebar.markdown("---")
+st.sidebar.markdown("### 🎯 OBJECTIVE")
+st.sidebar.info(
+    "Move all disks from Rod A to Rod C "
+    "using Rod B without breaking the rules."
 )
 
 if disk_count != st.session_state.disk_count:
@@ -137,105 +247,126 @@ moves = st.session_state.moves
 step = st.session_state.step
 minimum_moves = 2 ** disk_count - 1
 
-metric1, metric2, metric3 = st.columns(3)
-metric1.metric("Number of Disks", disk_count)
-metric2.metric("Minimum Moves", minimum_moves)
-metric3.metric("Current Move", step)
+st.markdown("### 📊 GAME STATISTICS")
+
+c1, c2, c3 = st.columns(3)
+
+c1.metric("🔵 TOTAL DISKS", disk_count)
+c2.metric("🎯 MINIMUM MOVES", minimum_moves)
+c3.metric("⚡ CURRENT MOVE", step)
 
 st.progress(step / minimum_moves)
 
-chart_area = st.empty()
-status_area = st.empty()
+st.markdown("### 🎮 LIVE PUZZLE VISUALIZATION")
 
-def show_current_state():
-    rods = get_rods(
-        st.session_state.disk_count,
-        st.session_state.moves,
-        st.session_state.step
+rods = get_rods(disk_count, moves, step)
+
+fig = draw_towers(disk_count, rods, step, minimum_moves)
+st.pyplot(fig, use_container_width=True)
+plt.close(fig)
+
+if step == minimum_moves:
+    st.success("🏆 CONGRATULATIONS! PUZZLE COMPLETED!")
+elif step == 0:
+    st.info("🚀 Ready to start! All disks are on Rod A.")
+else:
+    disk, source, destination = moves[step - 1]
+    st.info(
+        f"Last move: Disk {disk} moved from Rod "
+        f"{source} to Rod {destination}"
     )
 
-    fig = draw_towers(
-        st.session_state.disk_count,
-        rods,
-        st.session_state.step,
-        len(st.session_state.moves)
-    )
+st.markdown("### 🎛️ MOVEMENT CONTROLS")
 
-    chart_area.pyplot(fig)
-    plt.close(fig)
+b1, b2, b3, b4 = st.columns(4)
 
-    if st.session_state.step == len(st.session_state.moves):
-        status_area.success("🎉 Puzzle solved successfully!")
-    elif st.session_state.step == 0:
-        status_area.info("Start: All disks are on Rod A.")
-    else:
-        disk, source, destination = st.session_state.moves[
-            st.session_state.step - 1
-        ]
-        status_area.info(
-            f"Last move: Disk {disk} from Rod {source} to Rod {destination}"
-        )
-
-show_current_state()
-
-st.subheader("🎮 Movement Controls")
-
-col1, col2, col3, col4 = st.columns(4)
-
-with col1:
-    if st.button("⏮ Previous Move", use_container_width=True):
-        st.session_state.step = max(0, st.session_state.step - 1)
+with b1:
+    if st.button("⏮ PREVIOUS", use_container_width=True):
+        st.session_state.step = max(0, step - 1)
         st.rerun()
 
-with col2:
-    if st.button("Next Move ⏭", use_container_width=True):
-        st.session_state.step = min(
-            len(st.session_state.moves),
-            st.session_state.step + 1
-        )
+with b2:
+    if st.button("NEXT ⏭", use_container_width=True):
+        st.session_state.step = min(minimum_moves, step + 1)
         st.rerun()
 
-with col3:
-    if st.button("▶ Play Animation", use_container_width=True):
-        for current_step in range(
-            st.session_state.step + 1,
-            len(st.session_state.moves) + 1
-        ):
-            st.session_state.step = current_step
-            show_current_state()
+with b3:
+    if st.button("▶ PLAY ANIMATION", use_container_width=True):
+        for current in range(step + 1, minimum_moves + 1):
+            st.session_state.step = current
+
+            current_rods = get_rods(
+                disk_count, moves, current
+            )
+
+            current_fig = draw_towers(
+                disk_count, current_rods,
+                current, minimum_moves
+            )
+
+            placeholder = st.empty()
+            placeholder.pyplot(
+                current_fig, use_container_width=True
+            )
+            plt.close(current_fig)
+
             time.sleep(speed)
+
         st.rerun()
 
-with col4:
-    if st.button("🔄 Reset", use_container_width=True):
+with b4:
+    if st.button("🔄 RESET", use_container_width=True):
         st.session_state.step = 0
         st.rerun()
 
-st.divider()
+st.markdown("---")
 
-st.header("📘 Rules of Tower of Hanoi")
+st.markdown("### 📘 RULES OF THE PUZZLE")
 
-st.markdown("""
-1. Only one disk can be moved at a time.
-2. Only the top disk of a rod can be moved.
-3. A larger disk cannot be placed on a smaller disk.
-4. Move all disks from Rod A to Rod C using Rod B.
-""")
+r1, r2 = st.columns(2)
 
-st.header("🧠 Algorithm")
+with r1:
+    st.markdown("""
+    <div class="info-card">
+    <b>01. One Disk</b><br>
+    Move only one disk at a time.
+    </div>
+    <div class="info-card">
+    <b>02. Top Disk</b><br>
+    Only the top disk can be moved.
+    </div>
+    """, unsafe_allow_html=True)
 
-st.code("""
-1. If there is one disk, move it to the destination.
-2. Move n-1 disks from source to auxiliary.
-3. Move the largest disk to destination.
-4. Move n-1 disks from auxiliary to destination.
-5. Repeat until all disks reach the destination.
-""", language="text")
+with r2:
+    st.markdown("""
+    <div class="info-card">
+    <b>03. Size Rule</b><br>
+    Never place a larger disk on a smaller disk.
+    </div>
+    <div class="info-card">
+    <b>04. Final Goal</b><br>
+    Transfer every disk from Rod A to Rod C.
+    </div>
+    """, unsafe_allow_html=True)
 
-st.success(
-    f"Minimum moves for {disk_count} disks: "
-    f"2^{disk_count} - 1 = {minimum_moves}"
+st.markdown("### 🧠 MINIMUM MOVE FORMULA")
+
+st.latex(r"\text{Minimum Moves} = 2^n - 1")
+
+st.markdown(
+    f"""
+    <div class="info-card">
+    <h3 style="color:#22d3ee;">Calculation</h3>
+    Number of disks = {disk_count}<br>
+    Minimum moves = 2<sup>{disk_count}</sup> - 1<br>
+    <h2 style="color:#a78bfa;">Answer = {minimum_moves} Moves</h2>
+    </div>
+    """,
+    unsafe_allow_html=True
 )
 
-st.markdown("---")
-st.caption("Tower of Hanoi Visual Simulator | Python Project")
+st.markdown(
+    '<div class="footer">TOWER OF HANOI VISUAL SIMULATOR '
+    '| Python & Streamlit Project</div>',
+    unsafe_allow_html=True
+)
